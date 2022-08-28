@@ -25,23 +25,38 @@ def curl_to_txt(url):
 
     return get_body.split('\n')
 
-def available_times(curl):
+def p_id_to_person(p_id, names):
+    return list(names.keys())[list(names.values()).index(p_id)]
+
+def available_times(curl, names):
     times = {}
     for line in curl:
         if re.match(r"AvailableAtSlot.*.push.*", line):
             pair = re.findall(r'\d+', line)
             time = int(pair[0])
-            person = pair[1]
+            person = int(pair[1])
+            person = p_id_to_person(person, names)
             if time not in times:
                 times.update({
                     time : {
-                        'time_id' : (time),
+                        'time_id' : '',
+                        'time': '',
+                        'date': '',
+                        'day': '',
                         'people' : [person]
                     }
                 })
             else:
                 times[time]["people"].append(person)
-    
+
+    for line in curl:
+        if re.match(r"^TimeOfSlot.*;$", line):
+            pair = re.findall(r'\d+', line)
+            no = int(pair[0])
+            time_id = int(pair[1])
+            if no in times:
+                times[no]['time_id'] = time_id
+
     for entry in sorted(times):
         print(entry, times[entry])
     return times
@@ -77,5 +92,6 @@ if __name__ == "__main__":
     url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
 
     get_body = curl_to_txt(url)
-    times = available_times(get_body)
     name_dict = find_people(get_body)
+    times = available_times(get_body, name_dict)
+    print(name_dict)
