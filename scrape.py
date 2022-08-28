@@ -56,9 +56,15 @@ def available_times(curl, names):
             time_id = int(pair[1])
             if no in times:
                 times[no]['time_id'] = time_id
+                time_entry = times[no]
+                times.pop(no)
+                times.update({
+                    time_id: time_entry
+                })
 
-    for entry in sorted(times):
-        print(entry, times[entry])
+
+    # for entry in sorted(times):
+    #     print(entry, times[entry])
     return times
     
 def find_people(curl):
@@ -83,9 +89,50 @@ def find_people(curl):
             person_id = int(name.split(' ')[2])
             name_dict[last_name] = person_id
 
-    print(name_dict)
+    # print(name_dict)
 
     return name_dict
+
+def populate_times(curl, times):
+    # for line in curl:
+    #     if re.match()
+    print("hi")
+
+    for line in curl:
+        # if re.search(r"AEST", line):
+        #     if re.search(r"<div style=", line):
+        #         print('long')
+        #     else:
+        #         print("normal")
+        #         time_id = int(line.split('"')[5])
+        #         date_time = line.split('"')[7]
+        #         print(time_id, date_time)
+
+        time_regex = re.compile(r'(ShowSlot.*,)(".*\d\d\d\d).*(\d\d:\d\d:\d\d) (..) (AEST)')
+        time_info = time_regex.search(line)
+   
+
+        if time_info:
+            time_info = list(time_info.groups())
+            time_info[0] = int(time_info[0].split('(')[-1][0:-1])
+            time_id = time_info[0]
+            date = time_info[1][1:].split(' ')
+            day = date[0]
+            date = (' ').join(date[1:])
+            time = time_info[2]
+            am_pm = time_info[3]
+            # print(time_id, date, time, am_pm)
+
+
+            if time_info[0] in times:
+                # print(time_info)
+                times[time_id]['time'] = time
+                times[time_id]['date'] = date
+                times[time_id]['day'] = day
+                # times[time_id]['']
+
+
+    return times
 
 
 if __name__ == "__main__":
@@ -95,3 +142,6 @@ if __name__ == "__main__":
     name_dict = find_people(get_body)
     times = available_times(get_body, name_dict)
     print(name_dict)
+    times = populate_times(get_body, times)
+    for time in times:
+        print(time, times[time])
