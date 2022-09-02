@@ -41,6 +41,7 @@ def available_times(curl, names):
                     time : {
                         'time_id' : '',
                         'time': '',
+                        'am_pm': '',
                         'date': '',
                         'day': '',
                         'people' : [person]
@@ -128,12 +129,54 @@ def populate_times(curl, times):
                 # print(time_info)
                 times[time_id]['time'] = time
                 times[time_id]['date'] = date
-                times[time_id]['day'] = day
-                # times[time_id]['']
-
+                times[time_id]['day'] = extend_day_prefix(day)
+                times[time_id]['am_pm'] = am_pm
 
     return times
 
+def extend_day_prefix(day):
+    days = {
+        'Mon': 'Monday',
+        'Tue' : 'Tuesday',
+        'Wed': 'Wednesday',
+        'Thu': 'Thursday',
+        'Fri': 'Friday',
+        'Sat': 'Saturday',
+        'Sun': 'Sunday'
+    }
+    return days[day]
+
+def name_list():
+    
+
+    url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
+    curl = curl_to_txt(url)
+    
+    
+    for line in curl:
+        if re.match(r"PeopleNames.*;PeopleIDs", line):
+            name_string = line
+    name_string = name_string.split(';')
+    name_dict = {}
+    for name in name_string:
+        if re.match("AvailableAtSlot", name):
+            break
+        nums = re.findall(r'\d+', name)
+
+        # name
+        if len(nums) == 1:
+            person = name.split(' ')[2][1:-1]
+            name_dict.update({person:0})
+            last_name = person
+
+        # person_id
+        elif len(nums) == 2:
+            person_id = int(name.split(' ')[2])
+            name_dict[last_name] = person_id
+
+    print(list(name_dict.keys()))
+
+    return list(name_dict.keys())
 
 if __name__ == "__main__":
     url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
@@ -145,3 +188,5 @@ if __name__ == "__main__":
     times = populate_times(get_body, times)
     for time in times:
         print(time, times[time])
+
+
