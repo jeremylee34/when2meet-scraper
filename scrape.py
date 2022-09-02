@@ -11,6 +11,8 @@
 import pycurl
 from io import BytesIO
 import re
+from datetime import datetime, timedelta
+import sys
 
 def curl_to_txt(url):
     b_obj = BytesIO()
@@ -40,6 +42,7 @@ def available_times(curl, names):
                 times.update({
                     time : {
                         'time_id' : '',
+                        'date_time': '',
                         'time': '',
                         'am_pm': '',
                         'date': '',
@@ -97,7 +100,6 @@ def find_people(curl):
 def populate_times(curl, times):
     # for line in curl:
     #     if re.match()
-    print("hi")
 
     for line in curl:
         # if re.search(r"AEST", line):
@@ -127,6 +129,7 @@ def populate_times(curl, times):
 
             if time_info[0] in times:
                 # print(time_info)
+                times[time_id]['date_time'] = convert_time(date, time, am_pm)
                 times[time_id]['time'] = time
                 times[time_id]['date'] = date
                 times[time_id]['day'] = extend_day_prefix(day)
@@ -134,10 +137,14 @@ def populate_times(curl, times):
 
     return times
 
+def convert_time(date, time, am_pm):
+
+    return datetime.strptime(f"{date}{time[0:-3]}{am_pm}", "%d %b %Y%I:%M%p")
+
 def extend_day_prefix(day):
     days = {
         'Mon': 'Monday',
-        'Tue' : 'Tuesday',
+        'Tue': 'Tuesday',
         'Wed': 'Wednesday',
         'Thu': 'Thursday',
         'Fri': 'Friday',
@@ -148,8 +155,8 @@ def extend_day_prefix(day):
 
 def name_list():
     
-
     url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
+
     curl = curl_to_txt(url)
     
     
@@ -174,19 +181,46 @@ def name_list():
             person_id = int(name.split(' ')[2])
             name_dict[last_name] = person_id
 
-    print(list(name_dict.keys()))
 
     return list(name_dict.keys())
+
+
+def most_available(times):
+    max_available = 0
+    best_time = ''
+    best_time_end = ''
+    people_list = []
+    for time in times:
+        people_available = len(times[time]['people'])
+        if people_available > max_available:
+            max_available = people_available
+            best_time = times[time]['date_time']
+            people_list = times[time]['people']
+            day = times[time]['day']
+        elif people_available == max_available:
+            best_time_end = times[time]['date_time'] + timedelta(minutes=15)
+
+    return(best_time, best_time_end, people_list, day)
 
 if __name__ == "__main__":
     url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
 
+
     get_body = curl_to_txt(url)
     name_dict = find_people(get_body)
     times = available_times(get_body, name_dict)
-    print(name_dict)
+    # print(name_dict)
     times = populate_times(get_body, times)
-    for time in times:
-        print(time, times[time])
+    # for time in times:
+    #     print(times[time])
+    best_time, best_time_end, people_available, day = most_available(times)
+    all_people = name_list()
 
-
+    # print(f"Best time: {day} {best_time} till {best_time_end}\nPeople available: {people_available}\nNot available: {list(set(people_available) ^ set(all_people))}")
+    day_month = best_time.strftime("%d")
+    month_name = best_time.strftime("%B")
+    start_time_clock = best_time.strftime("%-I:%M%p")
+    end_time_clock = best_time_end.strftime("%-I:%M%p")
+    print(f"Best time: {day} {day_month} {month_name} {start_time_clock}-{end_time_clock}")
+    print(f"People available: {', '.join(people_available)}")
+    print(f"People unavailable: {', '.join(list(set(people_available) ^ set(all_people)))}")
