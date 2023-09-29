@@ -155,7 +155,7 @@ def extend_day_prefix(day):
 
 def name_list():
     
-    url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
+    url="https://www.when2meet.com/?21530549-tVMn3"
 
     curl = curl_to_txt(url)
     
@@ -184,26 +184,29 @@ def name_list():
 
     return list(name_dict.keys())
 
-
 def most_available(times):
     max_available = 0
-    best_time = ''
-    best_time_end = ''
+    best_time = None
+    best_time_end = None
     people_list = []
     for time in times:
-        people_available = len(times[time]['people'])
-        if people_available > max_available:
-            max_available = people_available
-            best_time = times[time]['date_time']
-            people_list = times[time]['people']
-            day = times[time]['day']
-        elif people_available == max_available:
-            best_time_end = times[time]['date_time'] + timedelta(minutes=15)
+        if isinstance(times[time]['date_time'], datetime):
+            people_available = len(times[time]['people'])
+            if people_available > max_available:
+                max_available = people_available
+                best_time = times[time]['date_time']
+                people_list = times[time]['people']
+                day = times[time]['day']
+            elif people_available == max_available:
+                best_time_end = times[time]['date_time'] + timedelta(minutes=15)
 
-    return(best_time, best_time_end, people_list, day)
+    return (best_time, best_time_end, people_list, day)
+
+
 
 if __name__ == "__main__":
-    url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
+    # url="https://www.when2meet.com/?16376106-q61We&fbclid=IwAR1lv2GJ-dipIfHLjb4dnQ1UHwPbDoJ-3CHskcjMVbA_hYJPLrk60Bg8yow"
+    url="https://www.when2meet.com/?21530549-tVMn3"
 
 
     get_body = curl_to_txt(url)
